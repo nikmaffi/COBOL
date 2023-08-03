@@ -2,7 +2,7 @@
        PROGRAM-ID. COBOL-SQLITE-TEST-CALLBACK.
        DATA DIVISION.
        LINKAGE SECTION.
-           77 PTR POINTER.
+           77 PTR              POINTER.
            77 NUM-COLUMNS      PIC S9(09).
            01 COL-VALUES.
                02 ID-COLUMN    POINTER.
