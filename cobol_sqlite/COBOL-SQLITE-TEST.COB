@@ -3,8 +3,8 @@
        DATA DIVISION.
        WORKING-STORAGE SECTION.
            77 SQLITE           POINTER.
-           77 ERROR-CODE       PIC S9(09).
-           77 DATABASE-NAME    PIC X(15).
+           77 ERROR-CODE       PIC S9(005) COMP-5.
+           77 DATABASE-NAME    PIC X(015).
            77 SQL-QUERY        PIC X(100).
            77 CALLBACK-FUNC    USAGE PROCEDURE-POINTER.
            77 COMMAND          PIC 9.
