@@ -4,13 +4,13 @@
        WORKING-STORAGE SECTION.
            77 SQLITE           POINTER.
            77 ERROR-CODE       PIC S9(005) COMP-5.
-           77 DATABASE-NAME    PIC X(015).
-           77 SQL-QUERY        PIC X(100).
+           77 DATABASE-NAME    PIC  X(015).
+           77 SQL-QUERY        PIC  X(100).
            77 CALLBACK-FUNC    USAGE PROCEDURE-POINTER.
-           77 COMMAND          PIC 9.
+           77 COMMAND          PIC  9.
            01 DATA-RECORD.
-               02 ID-FIELD     PIC 99.
-               02 NAME-FIELD   PIC X(30).
+               02 ID-FIELD     PIC  99.
+               02 NAME-FIELD   PIC  X(30).
        PROCEDURE DIVISION.
            SET SQLITE TO NULL.
 
