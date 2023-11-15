@@ -1,2 +1,2 @@
 # cobol
-Set of CO.B.O.L. projects.
+Set of CO.B.O.L. projects
