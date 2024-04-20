@@ -22,7 +22,11 @@
            77 SDL-WINDOW-SHOWN   PIC 9     VALUE IS 4.
            77 SDL-ERROR          POINTER.
            77 DONE               PIC 9     VALUE IS ZERO.
-           77 SPEED              PIC 99    VALUE IS 10.
+           77 UNIT-SIZE          PIC 99    VALUE IS 10.
+           01 GAME-TIME.
+               02 TSTART         PIC 9(9)  USAGE IS COMP-5.
+               02 TEND           PIC 9(9)  USAGE IS COMP-5.
+               02 DELTA          PIC 9(9)  VALUE IS ZEROES.
            77 SDL-POLL-EVENT     PIC 9     VALUE IS ZERO.
            01 SDL-EVENT.
                02 EVENT-TYPE     PIC 9(9)  USAGE IS COMP-5.
@@ -33,21 +37,35 @@
                        04 SYM    PIC S9(9) USAGE IS COMP-5.
                        04 FILLER PIC X(8)  VALUE IS SPACES.
                02 FILLER         PIC X(20) VALUE IS SPACES.
-           01 COLOR-BLACK.
-               02 BLACK-RED      PIC 9(3)  VALUE IS ZERO.
-               02 BLACK-GREEN    PIC 9(3)  VALUE IS ZERO.
-               02 BLACK-BLUE     PIC 9(3)  VALUE IS ZERO.
-               02 BLACK-ALPHA    PIC 9(3)  VALUE IS 255.
-           01 COLOR-RED.
-               02 RED-RED        PIC 9(3)  VALUE IS 255.
-               02 RED-GREEN      PIC 9(3)  VALUE IS ZERO.
-               02 RED-BLUE       PIC 9(3)  VALUE IS ZERO.
-               02 RED-ALPHA      PIC 9(3)  VALUE IS 255.
-           01 RECT.
-               02 RECT-X         PIC S9(9) USAGE IS COMP-5.
-               02 RECT-Y         PIC S9(9) USAGE IS COMP-5.
-               02 RECT-WIDTH     PIC S9(9) USAGE IS COMP-5.
-               02 RECT-HEIGHT    PIC S9(9) USAGE IS COMP-5.
+           01 BACKGROUND.
+               02 BACK-RED      PIC 9(3)  VALUE IS ZERO.
+               02 BACK-GREEN    PIC 9(3)  VALUE IS ZERO.
+               02 BACK-BLUE     PIC 9(3)  VALUE IS 255.
+               02 BACK-ALPHA    PIC 9(3)  VALUE IS 255.
+           01 PLAYER.
+               02 PL-STEP        PIC 99    VALUE IS 5.
+               02 PL-DIR         PIC 9     VALUE IS 1.
+               02 PL-COLOR.
+                   03 PL-COL-R   PIC 9(3)  VALUE IS ZERO.
+                   03 PL-COL-G   PIC 9(3)  VALUE IS 255.
+                   03 PL-COL-B   PIC 9(3)  VALUE IS ZERO.
+                   03 PL-COL-A   PIC 9(3)  VALUE IS 255.
+               02 PL-RECT.
+                   03 PL-RECT-X  PIC S9(9) USAGE IS COMP-5.
+                   03 PL-RECT-Y  PIC S9(9) USAGE IS COMP-5.
+                   03 PL-RECT-W  PIC S9(9) USAGE IS COMP-5.
+                   03 PL-RECT-H  PIC S9(9) USAGE IS COMP-5.
+           01 FOOD.
+               02 FD-COLOR.
+                   03 FD-COL-R   PIC 9(3)  VALUE IS 255.
+                   03 FD-COL-G   PIC 9(3)  VALUE IS ZERO.
+                   03 FD-COL-B   PIC 9(3)  VALUE IS ZERO.
+                   03 FD-COL-A   PIC 9(3)  VALUE IS 255.
+               02 FD-RECT.
+                   03 FD-RECT-X  PIC S9(9) USAGE IS COMP-5.
+                   03 FD-RECT-Y  PIC S9(9) USAGE IS COMP-5.
+                   03 FD-RECT-W  PIC S9(9) USAGE IS COMP-5.
+                   03 FD-RECT-H  PIC S9(9) USAGE IS COMP-5.
            01 MAIN-WINDOW.
                02 WIN-POINTER    POINTER.
                02 WIN-TITLE.
@@ -55,8 +73,8 @@
                    03 WT-END     PIC 9     USAGE IS BINARY.
                02 WIN-X          PIC 9(3)  VALUE IS 100.
                02 WIN-Y          PIC 9(3)  VALUE IS 100.
-               02 WIN-WIDTH      PIC 9(3)  VALUE IS 640.
-               02 WIN-HEIGHT     PIC 9(3)  VALUE IS 480.
+               02 WIN-WIDTH      PIC 9(3)  VALUE IS 800.
+               02 WIN-HEIGHT     PIC 9(3)  VALUE IS 600.
            01 RENDERER.
                02 REND-POINTER   POINTER.
                02 REND-INDEX     PIC S9    VALUE IS -1.
@@ -105,72 +123,35 @@
                PERFORM KILL-WINDOW
            END-IF.
 
-      *    PLAYER SETUP
-           MOVE 100 TO RECT-X
-           MOVE 100 TO RECT-Y
-           MOVE 10 TO RECT-WIDTH
-           MOVE 10 TO RECT-HEIGHT
+      *    PLAYER RECT SETUP
+           MOVE UNIT-SIZE TO PL-RECT-X
+           MOVE UNIT-SIZE TO PL-RECT-Y
+           MOVE UNIT-SIZE TO PL-RECT-W
+           MOVE UNIT-SIZE TO PL-RECT-H
+
+      *    FOOD RECT SETUP
+           MOVE UNIT-SIZE TO FD-RECT-X
+           MOVE UNIT-SIZE TO FD-RECT-Y
+           MOVE UNIT-SIZE TO FD-RECT-W
+           MOVE UNIT-SIZE TO FD-RECT-H
+
+      *    SET START TIME
+           CALL STATIC "SDL_GetTicks" RETURNING TSTART
 
       *    GAME LOOP
            PERFORM WITH TEST BEFORE UNTIL DONE IS EQUALS TO 1
-      *        EVENT HANDLER
-               PERFORM WITH TEST AFTER UNTIL SDL-POLL-EVENT = 0
-                   CALL STATIC "SDL_PollEvent" USING
-                       BY REFERENCE SDL-EVENT
-                       RETURNING SDL-POLL-EVENT
-                   END-CALL
+      *        DELTA TIME
+               CALL STATIC "SDL_GetTicks" RETURNING TEND
+               SUBTRACT TSTART FROM TEND GIVING DELTA
 
-                   IF EVENT-TYPE IS EQUALS TO SDL-QUIT THEN
-                       SET DONE TO 1
-                   ELSE IF EVENT-TYPE IS EQUALS TO SDL-KEYDOWN THEN
-      *                KEY HANDLER
-                       IF SYM IS EQUALS TO SDL-KUP THEN
-                           SUBTRACT SPEED FROM RECT-Y
-                       END-IF
+               IF DELTA IS GREATER THAN 16.66 THEN
+                   MOVE TEND TO TSTART
 
-                       IF SYM IS EQUALS TO SDL-KDOWN THEN
-                           ADD SPEED TO RECT-Y
-                       END-IF
+                   PERFORM EVENT-HANDLER
 
-                       IF SYM IS EQUALS TO SDL-KLEFT THEN
-                           SUBTRACT SPEED FROM RECT-X
-                       END-IF
-
-                       IF SYM IS EQUALS TO SDL-KRIGHT THEN
-                           ADD SPEED TO RECT-X
-                       END-IF
-                   END-IF
-               END-PERFORM
-
-               CALL STATIC "SDL_SetRenderDrawColor" USING
-                   BY VALUE REND-POINTER
-                   BY VALUE BLACK-RED
-                   BY VALUE BLACK-GREEN
-                   BY VALUE BLACK-BLUE
-                   BY VALUE BLACK-ALPHA
-               END-CALL
-
-               CALL STATIC "SDL_RenderClear" USING
-                   BY VALUE REND-POINTER
-               END-CALL
-
-      *        DRAW PLAYER
-               CALL STATIC "SDL_SetRenderDrawColor" USING
-                   BY VALUE REND-POINTER
-                   BY VALUE RED-RED
-                   BY VALUE RED-GREEN
-                   BY VALUE RED-BLUE
-                   BY VALUE RED-ALPHA
-               END-CALL
-
-               CALL STATIC "SDL_RenderFillRect" USING
-                   BY VALUE REND-POINTER
-                   BY REFERENCE RECT
-               END-CALL
-
-               CALL STATIC "SDL_RenderPresent" USING
-                   BY VALUE REND-POINTER
-               END-CALL
+                   PERFORM UPDATE-GAME
+                   PERFORM DRAW-GAME
+               END-IF
            END-PERFORM
 
            CALL STATIC "SDL_DestroyRenderer" USING
@@ -183,4 +164,90 @@
        KILL-SDL2.
            CALL STATIC "SDL_Quit"
            STOP RUN.
+
+       EVENT-HANDLER SECTION.
+           PERFORM WITH TEST AFTER UNTIL SDL-POLL-EVENT = 0
+               CALL STATIC "SDL_PollEvent" USING
+                   BY REFERENCE SDL-EVENT
+                   RETURNING SDL-POLL-EVENT
+               END-CALL
+    
+               IF EVENT-TYPE IS EQUALS TO SDL-QUIT THEN
+                   SET DONE TO 1
+               ELSE IF EVENT-TYPE IS EQUALS TO SDL-KEYDOWN THEN
+      *            KEY HANDLER
+                   IF SYM = SDL-KUP AND PL-DIR <> 2 THEN
+                       MOVE ZERO TO PL-DIR
+                   END-IF
+    
+                   IF SYM = SDL-KDOWN AND PL-DIR <> ZERO THEN
+                       MOVE 2 TO PL-DIR
+                   END-IF
+    
+                   IF SYM = SDL-KLEFT AND PL-DIR <> 1 THEN
+                       MOVE 3 TO PL-DIR
+                   END-IF
+    
+                   IF SYM = SDL-KRIGHT AND PL-DIR <> 3 THEN
+                       MOVE 1 TO PL-DIR
+                   END-IF
+               END-IF
+           END-PERFORM.
+
+       UPDATE-GAME SECTION.
+      *    PLAYER
+           EVALUATE PL-DIR
+               WHEN ZERO SUBTRACT PL-STEP FROM PL-RECT-Y
+               WHEN 1 ADD PL-STEP TO PL-RECT-X
+               WHEN 2 ADD PL-STEP TO PL-RECT-Y
+               WHEN 3 SUBTRACT PL-STEP FROM PL-RECT-X
+           END-EVALUATE.
+
+      *    FOOD
+
+       DRAW-GAME SECTION.
+      *    BACKGROUND
+           CALL STATIC "SDL_SetRenderDrawColor" USING
+               BY VALUE REND-POINTER
+               BY VALUE BACK-RED
+               BY VALUE BACK-GREEN
+               BY VALUE BACK-BLUE
+               BY VALUE BACK-ALPHA
+           END-CALL
+    
+           CALL STATIC "SDL_RenderClear" USING
+               BY VALUE REND-POINTER
+           END-CALL
+
+      *    FOOD
+           CALL STATIC "SDL_SetRenderDrawColor" USING
+               BY VALUE REND-POINTER
+               BY VALUE FD-COL-R
+               BY VALUE FD-COL-G
+               BY VALUE FD-COL-B
+               BY VALUE FD-COL-A
+           END-CALL
+    
+           CALL STATIC "SDL_RenderFillRect" USING
+               BY VALUE REND-POINTER
+               BY REFERENCE FD-RECT
+           END-CALL
+
+      *    PLAYER
+           CALL STATIC "SDL_SetRenderDrawColor" USING
+               BY VALUE REND-POINTER
+               BY VALUE PL-COL-R
+               BY VALUE PL-COL-G
+               BY VALUE PL-COL-B
+               BY VALUE PL-COL-A
+           END-CALL
+    
+           CALL STATIC "SDL_RenderFillRect" USING
+               BY VALUE REND-POINTER
+               BY REFERENCE PL-RECT
+           END-CALL
+    
+           CALL STATIC "SDL_RenderPresent" USING
+               BY VALUE REND-POINTER
+           END-CALL.
        END PROGRAM COBOL-SDL2.
