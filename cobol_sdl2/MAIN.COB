@@ -13,8 +13,14 @@
        DATA DIVISION.
        WORKING-STORAGE SECTION.
            77 SDL-INIT-VIDEO   PIC 99     VALUE IS 32.
+           77 SDL-QUIT         PIC 9(3)   VALUE IS 256.
            77 SDL-WINDOW-SHOWN PIC 9      VALUE IS 4.
            77 SDL-ERROR        POINTER.
+           77 DONE             PIC 9      VALUE IS ZERO.
+           77 SDL-POLL-EVENT   PIC 9      VALUE IS ZERO.
+           01 SDL-EVENT.
+               02 EVENT-TYPE   PIC 9(9)   USAGE IS COMP-5.
+               02 FILLER       PIC X(52)  VALUE IS SPACES.
            01 COLOR-BLACK.
                02 BLACK-RED    PIC 9(3)   VALUE IS ZERO.
                02 BLACK-GREEN  PIC 9(3)   VALUE IS ZERO.
@@ -89,7 +95,18 @@
            MOVE 200 TO RECT-WIDTH
            MOVE 200 TO RECT-HEIGHT
 
-           PERFORM 250 TIMES
+           PERFORM WITH TEST BEFORE UNTIL DONE IS EQUALS TO 1
+               PERFORM WITH TEST AFTER UNTIL SDL-POLL-EVENT = 0
+                   CALL STATIC "SDL_PollEvent" USING
+                       BY REFERENCE SDL-EVENT
+                       RETURNING SDL-POLL-EVENT
+                   END-CALL
+
+                   IF EVENT-TYPE IS EQUALS TO SDL-QUIT THEN
+                       SET DONE TO 1
+                   END-IF
+               END-PERFORM
+
                CALL STATIC "SDL_SetRenderDrawColor" USING
                    BY VALUE REND-POINTER
                    BY VALUE BLACK-RED
