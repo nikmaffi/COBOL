@@ -22,11 +22,12 @@
            77 SDL-WINDOW-SHOWN   PIC 9     VALUE IS 4.
            77 SDL-ERROR          POINTER.
            77 DONE               PIC 9     VALUE IS ZERO.
-           77 UNIT-SIZE          PIC 99    VALUE IS 10.
+           77 UNIT-SIZE          PIC 99    VALUE IS 20.
+           77 COUNTER            PIC 9(3)  VALUE IS ZERO.
            01 GAME-TIME.
                02 TSTART         PIC 9(9)  USAGE IS COMP-5.
                02 TEND           PIC 9(9)  USAGE IS COMP-5.
-               02 DELTA          PIC 9(9)  VALUE IS ZEROES.
+               02 DELTA          PIC 9(9)  VALUE IS ZERO.
            77 SDL-POLL-EVENT     PIC 9     VALUE IS ZERO.
            01 SDL-EVENT.
                02 EVENT-TYPE     PIC 9(9)  USAGE IS COMP-5.
@@ -38,24 +39,26 @@
                        04 FILLER PIC X(8)  VALUE IS SPACES.
                02 FILLER         PIC X(20) VALUE IS SPACES.
            01 BACKGROUND.
-               02 BACK-RED      PIC 9(3)  VALUE IS ZERO.
-               02 BACK-GREEN    PIC 9(3)  VALUE IS ZERO.
-               02 BACK-BLUE     PIC 9(3)  VALUE IS 255.
-               02 BACK-ALPHA    PIC 9(3)  VALUE IS 255.
+               02 BACK-RED       PIC 9(3)  VALUE IS ZERO.
+               02 BACK-GREEN     PIC 9(3)  VALUE IS ZERO.
+               02 BACK-BLUE      PIC 9(3)  VALUE IS 255.
+               02 BACK-ALPHA     PIC 9(3)  VALUE IS 255.
            01 PLAYER.
-               02 PL-STEP        PIC 99    VALUE IS 5.
+               02 PL-STEP        PIC 99    VALUE IS 20.
                02 PL-DIR         PIC 9     VALUE IS 1.
+               02 PL-SIZE        PIC 9(3)  VALUE IS 2.
                02 PL-COLOR.
                    03 PL-COL-R   PIC 9(3)  VALUE IS ZERO.
                    03 PL-COL-G   PIC 9(3)  VALUE IS 255.
                    03 PL-COL-B   PIC 9(3)  VALUE IS ZERO.
                    03 PL-COL-A   PIC 9(3)  VALUE IS 255.
-               02 PL-RECT.
+               02 PL-RECT OCCURS 128 TIMES.
                    03 PL-RECT-X  PIC S9(9) USAGE IS COMP-5.
                    03 PL-RECT-Y  PIC S9(9) USAGE IS COMP-5.
                    03 PL-RECT-W  PIC S9(9) USAGE IS COMP-5.
                    03 PL-RECT-H  PIC S9(9) USAGE IS COMP-5.
            01 FOOD.
+               02 EATEN          PIC 9     USAGE IS BINARY.
                02 FD-COLOR.
                    03 FD-COL-R   PIC 9(3)  VALUE IS 255.
                    03 FD-COL-G   PIC 9(3)  VALUE IS ZERO.
@@ -73,8 +76,8 @@
                    03 WT-END     PIC 9     USAGE IS BINARY.
                02 WIN-X          PIC 9(3)  VALUE IS 100.
                02 WIN-Y          PIC 9(3)  VALUE IS 100.
-               02 WIN-WIDTH      PIC 9(3)  VALUE IS 800.
-               02 WIN-HEIGHT     PIC 9(3)  VALUE IS 600.
+               02 WIN-W          PIC 9(3)  VALUE IS 800.
+               02 WIN-H          PIC 9(3)  VALUE IS 600.
            01 RENDERER.
                02 REND-POINTER   POINTER.
                02 REND-INDEX     PIC S9    VALUE IS -1.
@@ -99,15 +102,15 @@
                BY REFERENCE WIN-TITLE
                BY VALUE WIN-X
                BY VALUE WIN-Y
-               BY VALUE WIN-WIDTH
-               BY VALUE WIN-HEIGHT
+               BY VALUE WIN-W
+               BY VALUE WIN-H
                BY VALUE SDL-WINDOW-SHOWN
                RETURNING WIN-POINTER
            END-CALL
 
            IF WIN-POINTER IS EQUALS TO NULL THEN
                DISPLAY "Error: Cannot create main window!"
-               PERFORM KILL-SDL2
+               GO TO KILL-SDL2
            END-IF
 
       *    MAIN WINDOW RENDERER INITIALIZATION
@@ -120,18 +123,17 @@
 
            IF REND-POINTER IS EQUALS TO NULL THEN
                DISPLAY "Error: Cannot create renderer!"
-               PERFORM KILL-WINDOW
+               GO TO KILL-WINDOW
            END-IF.
 
       *    PLAYER RECT SETUP
-           MOVE UNIT-SIZE TO PL-RECT-X
-           MOVE UNIT-SIZE TO PL-RECT-Y
-           MOVE UNIT-SIZE TO PL-RECT-W
-           MOVE UNIT-SIZE TO PL-RECT-H
+           MOVE UNIT-SIZE TO PL-RECT-X(1)
+           MOVE UNIT-SIZE TO PL-RECT-Y(1)
+           MOVE UNIT-SIZE TO PL-RECT-W(1)
+           MOVE UNIT-SIZE TO PL-RECT-H(1)
 
       *    FOOD RECT SETUP
-           MOVE UNIT-SIZE TO FD-RECT-X
-           MOVE UNIT-SIZE TO FD-RECT-Y
+           SET EATEN TO 1
            MOVE UNIT-SIZE TO FD-RECT-W
            MOVE UNIT-SIZE TO FD-RECT-H
 
@@ -144,7 +146,7 @@
                CALL STATIC "SDL_GetTicks" RETURNING TEND
                SUBTRACT TSTART FROM TEND GIVING DELTA
 
-               IF DELTA IS GREATER THAN 16.66 THEN
+               IF DELTA IS GREATER THAN 33.33 THEN
                    MOVE TEND TO TSTART
 
                    PERFORM EVENT-HANDLER
@@ -196,14 +198,41 @@
 
        UPDATE-GAME SECTION.
       *    PLAYER
+           COMPUTE COUNTER = PL-SIZE
+
+           PERFORM WITH TEST AFTER UNTIL COUNTER IS EQUALS TO 1
+               MOVE PL-RECT(COUNTER- 1) TO PL-RECT(COUNTER)
+
+               SUBTRACT 1 FROM COUNTER
+           END-PERFORM
+
            EVALUATE PL-DIR
-               WHEN ZERO SUBTRACT PL-STEP FROM PL-RECT-Y
-               WHEN 1 ADD PL-STEP TO PL-RECT-X
-               WHEN 2 ADD PL-STEP TO PL-RECT-Y
-               WHEN 3 SUBTRACT PL-STEP FROM PL-RECT-X
+               WHEN ZERO SUBTRACT PL-STEP FROM PL-RECT-Y(1)
+               WHEN 1 ADD PL-STEP TO PL-RECT-X(1)
+               WHEN 2 ADD PL-STEP TO PL-RECT-Y(1)
+               WHEN 3 SUBTRACT PL-STEP FROM PL-RECT-X(1)
            END-EVALUATE.
 
+           IF
+               FD-RECT-X < PL-RECT-X(1) + PL-RECT-W(1) AND
+               FD-RECT-X + FD-RECT-W > PL-RECT-X(1) AND
+               FD-RECT-Y < PL-RECT-Y(1) + PL-RECT-H(1) AND
+               FD-RECT-Y + FD-RECT-H > PL-RECT-Y(1)
+           THEN
+               SET EATEN TO 1
+           END-IF
+
       *    FOOD
+           IF EATEN IS EQUALS TO 1 THEN
+               COMPUTE FD-RECT-X = FUNCTION RANDOM * (WIN-W / UNIT-SIZE)
+               MULTIPLY UNIT-SIZE BY FD-RECT-X
+
+               COMPUTE FD-RECT-Y = FUNCTION RANDOM * (WIN-H / UNIT-SIZE)
+               MULTIPLY UNIT-SIZE BY FD-RECT-Y
+
+               SET EATEN TO ZERO
+               ADD 1 TO PL-SIZE
+           END-IF.
 
        DRAW-GAME SECTION.
       *    BACKGROUND
@@ -242,10 +271,16 @@
                BY VALUE PL-COL-A
            END-CALL
     
-           CALL STATIC "SDL_RenderFillRect" USING
-               BY VALUE REND-POINTER
-               BY REFERENCE PL-RECT
-           END-CALL
+           MOVE 1 TO COUNTER
+
+           PERFORM WITH TEST AFTER UNTIL COUNTER IS GREATER THAN PL-SIZE
+               CALL STATIC "SDL_RenderFillRect" USING
+                   BY VALUE REND-POINTER
+                   BY REFERENCE PL-RECT(COUNTER)
+               END-CALL
+
+               ADD 1 TO COUNTER
+           END-PERFORM
     
            CALL STATIC "SDL_RenderPresent" USING
                BY VALUE REND-POINTER
