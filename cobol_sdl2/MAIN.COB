@@ -27,8 +27,8 @@
            01 GAME-TIME.
                02 TSTART         PIC 9(9)  USAGE IS COMP-5.
                02 TEND           PIC 9(9)  USAGE IS COMP-5.
-               02 DELTA          PIC 9(9)  VALUE IS ZERO.
-           77 SDL-POLL-EVENT     PIC 9     VALUE IS ZERO.
+               02 DELTA          PIC 9(9)  USAGE IS COMP-5.
+           77 SDL-POLL-EVENT     PIC 9(9)  USAGE IS COMP-5.
            01 SDL-EVENT.
                02 EVENT-TYPE     PIC 9(9)  USAGE IS COMP-5.
                02 EVENT-KEY.
@@ -37,22 +37,22 @@
                        04 FILLER PIC X(4)  VALUE IS SPACES.
                        04 SYM    PIC S9(9) USAGE IS COMP-5.
                        04 FILLER PIC X(8)  VALUE IS SPACES.
-               02 FILLER         PIC X(20) VALUE IS SPACES.
+               02 FILLER         PIC X(24) VALUE IS SPACES.
            01 BACKGROUND.
-               02 BACK-RED       PIC 9(3)  VALUE IS ZERO.
-               02 BACK-GREEN     PIC 9(3)  VALUE IS ZERO.
-               02 BACK-BLUE      PIC 9(3)  VALUE IS 255.
-               02 BACK-ALPHA     PIC 9(3)  VALUE IS 255.
+               02 BACK-R         PIC 9(3)  VALUE IS 132.
+               02 BACK-G         PIC 9(3)  VALUE IS 192.
+               02 BACK-B         PIC 9(3)  VALUE IS 017.
+               02 BACK-A         PIC 9(3)  VALUE IS 255.
            01 PLAYER.
                02 PL-STEP        PIC 99    VALUE IS 20.
                02 PL-DIR         PIC 9     VALUE IS 1.
                02 PL-SIZE        PIC 9(3)  VALUE IS 2.
                02 PL-COLOR.
                    03 PL-COL-R   PIC 9(3)  VALUE IS ZERO.
-                   03 PL-COL-G   PIC 9(3)  VALUE IS 255.
-                   03 PL-COL-B   PIC 9(3)  VALUE IS ZERO.
+                   03 PL-COL-G   PIC 9(3)  VALUE IS 102.
+                   03 PL-COL-B   PIC 9(3)  VALUE IS 204.
                    03 PL-COL-A   PIC 9(3)  VALUE IS 255.
-               02 PL-RECT OCCURS 128 TIMES.
+               02 PL-RECT        OCCURS 128 TIMES.
                    03 PL-RECT-X  PIC S9(9) USAGE IS COMP-5.
                    03 PL-RECT-Y  PIC S9(9) USAGE IS COMP-5.
                    03 PL-RECT-W  PIC S9(9) USAGE IS COMP-5.
@@ -60,20 +60,23 @@
            01 FOOD.
                02 EATEN          PIC 9     USAGE IS BINARY.
                02 FD-COLOR.
-                   03 FD-COL-R   PIC 9(3)  VALUE IS 255.
-                   03 FD-COL-G   PIC 9(3)  VALUE IS ZERO.
-                   03 FD-COL-B   PIC 9(3)  VALUE IS ZERO.
+                   03 FD-COL-R   PIC 9(3)  VALUE IS 221.
+                   03 FD-COL-G   PIC 9(3)  VALUE IS 021.
+                   03 FD-COL-B   PIC 9(3)  VALUE IS 051.
                    03 FD-COL-A   PIC 9(3)  VALUE IS 255.
                02 FD-RECT.
                    03 FD-RECT-X  PIC S9(9) USAGE IS COMP-5.
                    03 FD-RECT-Y  PIC S9(9) USAGE IS COMP-5.
                    03 FD-RECT-W  PIC S9(9) USAGE IS COMP-5.
                    03 FD-RECT-H  PIC S9(9) USAGE IS COMP-5.
+           77 SCREEN-INFO-RET    PIC S9(9) USAGE IS COMP-5.
+           01 SCREEN-INFO.
+               02 FILLER         PIC X(4)  VALUE IS ZERO.
+               02 DESKTOP-W      PIC S9(9) USAGE IS COMP-5.
+               02 DESKTOP-H      PIC S9(9) USAGE IS COMP-5.
+               02 FILLER         PIC X(12) VALUE IS ZERO.
            01 MAIN-WINDOW.
                02 WIN-POINTER    POINTER.
-               02 WIN-TITLE.
-                   03 WT-TEXT    PIC X(15) VALUE IS "SDL2 with COBOL".
-                   03 WT-END     PIC 9     USAGE IS BINARY.
                02 WIN-X          PIC 9(3)  VALUE IS 100.
                02 WIN-Y          PIC 9(3)  VALUE IS 100.
                02 WIN-W          PIC 9(3)  VALUE IS 800.
@@ -95,11 +98,24 @@
                STOP RUN
            END-IF
 
+      *    GETTING SCREEN WIDTH AND HEIGHT
+           CALL STATIC "SDL_GetDesktopDisplayMode" USING
+               BY VALUE ZERO
+               BY REFERENCE SCREEN-INFO
+               RETURNING SCREEN-INFO-RET
+           END-CALL
+
+           IF SCREEN-INFO-RET IS NOT EQUALS TO ZERO THEN
+               DISPLAY "Error: Cannot get screen info!"
+               STOP RUN
+           END-IF
+
       *    MAIN WINDOW INITIALIZATION
-           SET WT-END TO ZERO
+           COMPUTE WIN-X = DESKTOP-W / 2 - WIN-W / 2
+           COMPUTE WIN-Y = DESKTOP-H / 2 - WIN-H / 2
 
            CALL STATIC "SDL_CreateWindow" USING
-               BY REFERENCE WIN-TITLE
+               BY REFERENCE "CO.B.O.L. Snake"
                BY VALUE WIN-X
                BY VALUE WIN-Y
                BY VALUE WIN-W
@@ -146,7 +162,7 @@
                CALL STATIC "SDL_GetTicks" RETURNING TEND
                SUBTRACT TSTART FROM TEND GIVING DELTA
 
-               IF DELTA IS GREATER THAN 33.33 THEN
+               IF DELTA IS GREATER THAN 50 THEN
                    MOVE TEND TO TSTART
 
                    PERFORM EVENT-HANDLER
@@ -154,8 +170,9 @@
                    PERFORM UPDATE-GAME
                    PERFORM DRAW-GAME
                END-IF
-           END-PERFORM
+           END-PERFORM.
 
+       KILL-RENDERER.
            CALL STATIC "SDL_DestroyRenderer" USING
                BY VALUE REND-POINTER
            END-CALL.
@@ -198,7 +215,7 @@
 
        UPDATE-GAME SECTION.
       *    PLAYER
-           COMPUTE COUNTER = PL-SIZE
+           MOVE PL-SIZE TO COUNTER
 
            PERFORM WITH TEST AFTER UNTIL COUNTER IS EQUALS TO 1
                MOVE PL-RECT(COUNTER- 1) TO PL-RECT(COUNTER)
@@ -214,6 +231,13 @@
            END-EVALUATE.
 
            IF
+               PL-RECT-X(1) < ZERO OR PL-RECT-X(1) > WIN-W OR
+               PL-RECT-Y(1) < ZERO OR PL-RECT-Y(1) > WIN-H
+           THEN
+               GO TO KILL-RENDERER
+           END-IF
+
+           IF
                FD-RECT-X < PL-RECT-X(1) + PL-RECT-W(1) AND
                FD-RECT-X + FD-RECT-W > PL-RECT-X(1) AND
                FD-RECT-Y < PL-RECT-Y(1) + PL-RECT-H(1) AND
@@ -224,24 +248,29 @@
 
       *    FOOD
            IF EATEN IS EQUALS TO 1 THEN
-               COMPUTE FD-RECT-X = FUNCTION RANDOM * (WIN-W / UNIT-SIZE)
+               COMPUTE FD-RECT-X =
+                   FUNCTION RANDOM * (WIN-W / UNIT-SIZE - 2) + 1
                MULTIPLY UNIT-SIZE BY FD-RECT-X
 
-               COMPUTE FD-RECT-Y = FUNCTION RANDOM * (WIN-H / UNIT-SIZE)
+               COMPUTE FD-RECT-Y =
+                   FUNCTION RANDOM * (WIN-H / UNIT-SIZE - 2) + 1
                MULTIPLY UNIT-SIZE BY FD-RECT-Y
 
                SET EATEN TO ZERO
-               ADD 1 TO PL-SIZE
+
+               IF PL-SIZE IS LESS THAN 128 THEN
+                   ADD 1 TO PL-SIZE
+               END-IF
            END-IF.
 
        DRAW-GAME SECTION.
       *    BACKGROUND
            CALL STATIC "SDL_SetRenderDrawColor" USING
                BY VALUE REND-POINTER
-               BY VALUE BACK-RED
-               BY VALUE BACK-GREEN
-               BY VALUE BACK-BLUE
-               BY VALUE BACK-ALPHA
+               BY VALUE BACK-R
+               BY VALUE BACK-G
+               BY VALUE BACK-B
+               BY VALUE BACK-A
            END-CALL
     
            CALL STATIC "SDL_RenderClear" USING
