@@ -10,7 +10,7 @@ BIN_DIR=BIN
 all: $(BIN)
 
 $(BIN): $(MAIN)
-	$(COBC) -x -o $@ $^ $(LIBS)
+	$(COBC) -Ox -o $@ $^ $(LIBS)
 
 clean:
 	rm $(BIN)
