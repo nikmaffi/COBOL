@@ -31,13 +31,9 @@
            77 SDL-POLL-EVENT     PIC 9(9)  USAGE IS COMP-5.
            01 SDL-EVENT.
                02 EVENT-TYPE     PIC 9(9)  USAGE IS COMP-5.
-               02 EVENT-KEY.
-                   03 FILLER     PIC X(12) VALUE IS SPACES.
-                   03 KEYSYM.
-                       04 FILLER PIC X(4)  VALUE IS SPACES.
-                       04 SYM    PIC S9(9) USAGE IS COMP-5.
-                       04 FILLER PIC X(8)  VALUE IS SPACES.
-               02 FILLER         PIC X(24) VALUE IS SPACES.
+               02 FILLER         PIC X(16) VALUE IS ZERO.
+               02 EVENT-KEY      PIC S9(9) USAGE IS COMP-5.
+               02 FILLER         PIC X(32) VALUE IS ZERO.
            01 BACKGROUND.
                02 BACK-R         PIC 9(3)  VALUE IS 132.
                02 BACK-G         PIC 9(3)  VALUE IS 192.
@@ -195,19 +191,19 @@
                    SET DONE TO 1
                ELSE IF EVENT-TYPE IS EQUALS TO SDL-KEYDOWN THEN
       *            KEY HANDLER
-                   IF SYM = SDL-KUP AND PL-DIR <> 2 THEN
+                   IF EVENT-KEY = SDL-KUP AND PL-DIR <> 2 THEN
                        MOVE ZERO TO PL-DIR
                    END-IF
     
-                   IF SYM = SDL-KDOWN AND PL-DIR <> ZERO THEN
+                   IF EVENT-KEY = SDL-KDOWN AND PL-DIR <> ZERO THEN
                        MOVE 2 TO PL-DIR
                    END-IF
     
-                   IF SYM = SDL-KLEFT AND PL-DIR <> 1 THEN
+                   IF EVENT-KEY = SDL-KLEFT AND PL-DIR <> 1 THEN
                        MOVE 3 TO PL-DIR
                    END-IF
     
-                   IF SYM = SDL-KRIGHT AND PL-DIR <> 3 THEN
+                   IF EVENT-KEY = SDL-KRIGHT AND PL-DIR <> 3 THEN
                        MOVE 1 TO PL-DIR
                    END-IF
                END-IF
