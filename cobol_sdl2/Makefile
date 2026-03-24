@@ -9,7 +9,10 @@ BIN_DIR=BIN
 
 all: $(BIN)
 
-$(BIN): $(MAIN)
+$(BIN_DIR):
+	mkdir -p $@
+
+$(BIN): $(MAIN) | $(BIN_DIR)
 	$(COBC) -Ox -o $@ $^ $(LIBS)
 
 clean:
