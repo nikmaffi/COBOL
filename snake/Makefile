@@ -1,19 +1,26 @@
 COBC=cobc
 
-BIN=$(BIN_DIR)/sdl2-cobol
+COBFLAGS=-x -std=ibm -Wall -Wextra -Wno-terminator
 
-LIBS=-lSDL2
-MAIN=MAIN.COB
+SRC_DIR=src
+BIN_DIR=bin
 
-BIN_DIR=BIN
+SRCS=$(wildcard $(SRC_DIR)/*.cob)
+LIBS=$(addprefix -l, SDL2)
+
+BIN=$(BIN_DIR)/snake
 
 all: $(BIN)
 
 $(BIN_DIR):
 	mkdir -p $@
 
-$(BIN): $(MAIN) | $(BIN_DIR)
-	$(COBC) -Ox -o $@ $^ $(LIBS)
+$(BIN): $(SRCS) | $(BIN_DIR)
+	$(COBC) $(COBFLAGS) $^ -o $@ $(LIBS)
+	strip $(BIN)
+
+run: all
+	./$(BIN)
 
 clean:
-	rm $(BIN)
+	rm -rf ./$(BIN_DIR)/*

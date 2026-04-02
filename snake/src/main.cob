@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID.             COBOL-SDL2.
+       PROGRAM-ID.             SNAKE.
        AUTHOR.                 NIK MAFFI.
        INSTALLATION.           HOME.
        DATE-WRITTEN.           19/04/2024.
@@ -8,88 +8,92 @@
        ENVIRONMENT DIVISION.
        CONFIGURATION SECTION.
        SOURCE-COMPUTER.        NIK-WORKSTATION.
-       OBJECT-COMPUTER.        NIK-WORKSTATION
-           MEMORY SIZE 17179869184 CHARACTERS.
+       OBJECT-COMPUTER.        UNKNOWN.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-           77 SDL-INIT-VIDEO     PIC 99    VALUE IS 32.
-           77 SDL-QUIT           PIC 9(3)  VALUE IS 256.
-           77 SDL-KEYDOWN        PIC 9(3)  VALUE IS 768.
-           77 SDL-KUP            PIC 9(10) VALUE IS 1073741906.
-           77 SDL-KDOWN          PIC 9(10) VALUE IS 1073741905.
-           77 SDL-KLEFT          PIC 9(10) VALUE IS 1073741904.
-           77 SDL-KRIGHT         PIC 9(10) VALUE IS 1073741903.
-           77 SDL-WINDOW-SHOWN   PIC 9     VALUE IS 4.
-           77 SDL-ERROR          POINTER.
-           77 DONE               PIC 9     VALUE IS ZERO.
-           77 UNIT-SIZE          PIC 99    VALUE IS 20.
-           77 COUNTER            PIC 9(3)  VALUE IS ZERO.
-           01 GAME-TIME.
-               02 TSTART         PIC 9(9)  USAGE IS COMP-5.
-               02 TEND           PIC 9(9)  USAGE IS COMP-5.
-               02 DELTA          PIC 9(9)  USAGE IS COMP-5.
-           77 SDL-POLL-EVENT     PIC 9(9)  USAGE IS COMP-5.
-           01 SDL-EVENT.
-               02 EVENT-TYPE     PIC 9(9)  USAGE IS COMP-5.
-               02 FILLER         PIC X(16) VALUE IS ZERO.
-               02 EVENT-KEY      PIC S9(9) USAGE IS COMP-5.
-               02 FILLER         PIC X(32) VALUE IS ZERO.
-           01 BACKGROUND.
-               02 BACK-R         PIC 9(3)  VALUE IS 132.
-               02 BACK-G         PIC 9(3)  VALUE IS 192.
-               02 BACK-B         PIC 9(3)  VALUE IS 017.
-               02 BACK-A         PIC 9(3)  VALUE IS 255.
-           01 PLAYER.
-               02 PL-STEP        PIC 99    VALUE IS 20.
-               02 PL-DIR         PIC 9     VALUE IS 1.
-               02 PL-SIZE        PIC 9(3)  VALUE IS 2.
-               02 PL-COLOR.
-                   03 PL-COL-R   PIC 9(3)  VALUE IS ZERO.
-                   03 PL-COL-G   PIC 9(3)  VALUE IS 102.
-                   03 PL-COL-B   PIC 9(3)  VALUE IS 204.
-                   03 PL-COL-A   PIC 9(3)  VALUE IS 255.
-               02 PL-RECT        OCCURS 128 TIMES.
-                   03 PL-RECT-X  PIC S9(9) USAGE IS COMP-5.
-                   03 PL-RECT-Y  PIC S9(9) USAGE IS COMP-5.
-                   03 PL-RECT-W  PIC S9(9) USAGE IS COMP-5.
-                   03 PL-RECT-H  PIC S9(9) USAGE IS COMP-5.
-           01 FOOD.
-               02 EATEN          PIC 9     USAGE IS BINARY.
-               02 FD-COLOR.
-                   03 FD-COL-R   PIC 9(3)  VALUE IS 221.
-                   03 FD-COL-G   PIC 9(3)  VALUE IS 021.
-                   03 FD-COL-B   PIC 9(3)  VALUE IS 051.
-                   03 FD-COL-A   PIC 9(3)  VALUE IS 255.
-               02 FD-RECT.
-                   03 FD-RECT-X  PIC S9(9) USAGE IS COMP-5.
-                   03 FD-RECT-Y  PIC S9(9) USAGE IS COMP-5.
-                   03 FD-RECT-W  PIC S9(9) USAGE IS COMP-5.
-                   03 FD-RECT-H  PIC S9(9) USAGE IS COMP-5.
-           77 SCREEN-INFO-RET    PIC S9(9) USAGE IS COMP-5.
-           01 SCREEN-INFO.
-               02 FILLER         PIC X(4)  VALUE IS ZERO.
-               02 DESKTOP-W      PIC S9(9) USAGE IS COMP-5.
-               02 DESKTOP-H      PIC S9(9) USAGE IS COMP-5.
-               02 FILLER         PIC X(12) VALUE IS ZERO.
-           01 MAIN-WINDOW.
-               02 WIN-POINTER    POINTER.
-               02 WIN-X          PIC 9(3)  VALUE IS 100.
-               02 WIN-Y          PIC 9(3)  VALUE IS 100.
-               02 WIN-W          PIC 9(3)  VALUE IS 800.
-               02 WIN-H          PIC 9(3)  VALUE IS 600.
-           01 RENDERER.
-               02 REND-POINTER   POINTER.
-               02 REND-INDEX     PIC S9    VALUE IS -1.
-               02 REND-FLAGS     PIC 9     VALUE IS 6.
+       77 SDL-INIT-VIDEO     PIC 99    USAGE IS COMP-5 VALUE IS 32.
+       77 SDL-QUIT           PIC 9(3)  USAGE IS COMP-5 VALUE IS 256.
+       77 SDL-KEYDOWN        PIC 9(3)  USAGE IS COMP-5 VALUE IS 768.
+       77 SDL-KUP            PIC 9(10) USAGE IS COMP-5
+           VALUE IS 1073741906.
+       77 SDL-KDOWN          PIC 9(10) USAGE IS COMP-5
+           VALUE IS 1073741905.
+       77 SDL-KLEFT          PIC 9(10) USAGE IS COMP-5
+           VALUE IS 1073741904.
+       77 SDL-KRIGHT         PIC 9(10) USAGE IS COMP-5
+           VALUE IS 1073741903.
+       77 SDL-WINDOW-SHOWN   PIC 9     USAGE IS COMP-5 VALUE IS 4.
+       77 SDL-INIT-RET       PIC S9(9) USAGE IS COMP-5.
+       77 SDL-ERROR          POINTER.
+       77 DONE               PIC 9     VALUE IS ZERO.
+       77 UNIT-SIZE          PIC 99    VALUE IS 20.
+       77 COUNTER            PIC 9(3)  VALUE IS ZERO.
+       01 GAME-TIME.
+           02 TSTART         PIC 9(9)  USAGE IS COMP-5.
+           02 TEND           PIC 9(9)  USAGE IS COMP-5.
+           02 DELTA          PIC 9(9)  USAGE IS COMP-5.
+       77 SDL-POLL-EVENT     PIC 9(9)  USAGE IS COMP-5.
+       01 SDL-EVENT.
+           02 EVENT-TYPE     PIC 9(9)  USAGE IS COMP-5.
+           02 FILLER         PIC X(16) VALUE IS ZERO.
+           02 EVENT-KEY      PIC S9(9) USAGE IS COMP-5.
+           02 FILLER         PIC X(32) VALUE IS ZERO.
+       01 BACKGROUND.
+           02 BACK-R         PIC 9(3)  USAGE IS COMP-5 VALUE IS 132.
+           02 BACK-G         PIC 9(3)  USAGE IS COMP-5 VALUE IS 192.
+           02 BACK-B         PIC 9(3)  USAGE IS COMP-5 VALUE IS 017.
+           02 BACK-A         PIC 9(3)  USAGE IS COMP-5 VALUE IS 255.
+       01 PLAYER.
+           02 PL-STEP        PIC 99    VALUE IS 20.
+           02 PL-DIR         PIC 9     VALUE IS 1.
+           02 PL-SIZE        PIC 9(3)  VALUE IS 2.
+           02 PL-COLOR.
+               03 PL-COL-R   PIC 9(3)  USAGE IS COMP-5 VALUE IS ZERO.
+               03 PL-COL-G   PIC 9(3)  USAGE IS COMP-5 VALUE IS 102.
+               03 PL-COL-B   PIC 9(3)  USAGE IS COMP-5 VALUE IS 204.
+               03 PL-COL-A   PIC 9(3)  USAGE IS COMP-5 VALUE IS 255.
+           02 PL-RECT        OCCURS 128 TIMES.
+               03 PL-RECT-X  PIC S9(9) USAGE IS COMP-5.
+               03 PL-RECT-Y  PIC S9(9) USAGE IS COMP-5.
+               03 PL-RECT-W  PIC S9(9) USAGE IS COMP-5.
+               03 PL-RECT-H  PIC S9(9) USAGE IS COMP-5.
+       01 FOOD.
+           02 EATEN          PIC 9     USAGE IS BINARY.
+           02 FD-COLOR.
+               03 FD-COL-R   PIC 9(3)  USAGE IS COMP-5 VALUE IS 221.
+               03 FD-COL-G   PIC 9(3)  USAGE IS COMP-5 VALUE IS 021.
+               03 FD-COL-B   PIC 9(3)  USAGE IS COMP-5 VALUE IS 051.
+               03 FD-COL-A   PIC 9(3)  USAGE IS COMP-5 VALUE IS 255.
+           02 FD-RECT.
+               03 FD-RECT-X  PIC S9(9) USAGE IS COMP-5.
+               03 FD-RECT-Y  PIC S9(9) USAGE IS COMP-5.
+               03 FD-RECT-W  PIC S9(9) USAGE IS COMP-5.
+               03 FD-RECT-H  PIC S9(9) USAGE IS COMP-5.
+       77 SCREEN-INFO-RET    PIC S9(9) USAGE IS COMP-5.
+       01 SCREEN-INFO.
+           02 FILLER         PIC X(4)  VALUE IS ZERO.
+           02 DESKTOP-W      PIC S9(9) USAGE IS COMP-5.
+           02 DESKTOP-H      PIC S9(9) USAGE IS COMP-5.
+           02 FILLER         PIC X(12) VALUE IS ZERO.
+       01 MAIN-WINDOW.
+           02 WIN-POINTER    POINTER.
+           02 WIN-X          PIC 9(3)  USAGE IS COMP-5 VALUE IS 100.
+           02 WIN-Y          PIC 9(3)  USAGE IS COMP-5 VALUE IS 100.
+           02 WIN-W          PIC 9(3)  USAGE IS COMP-5 VALUE IS 800.
+           02 WIN-H          PIC 9(3)  USAGE IS COMP-5 VALUE IS 600.
+       01 RENDERER.
+           02 REND-POINTER   POINTER.
+           02 REND-INDEX     PIC S9    USAGE IS COMP-5 VALUE IS -1.
+           02 REND-FLAGS     PIC 9     USAGE IS COMP-5 VALUE IS 6.
        PROCEDURE DIVISION.
        MAIN SECTION.
       *    SDL2 INITIALIZATION
            CALL STATIC "SDL_Init" USING
                BY VALUE SDL-INIT-VIDEO
-               RETURNING SDL-ERROR
+               RETURNING SDL-INIT-RET
            END-CALL
 
-           IF SDL-ERROR IS NOT EQUALS TO NULL THEN
+           IF SDL-INIT-RET IS NOT EQUALS TO ZERO THEN
                DISPLAY "Error: Cannot initialize SDL2!"
                STOP RUN
            END-IF
@@ -310,4 +314,4 @@
            CALL STATIC "SDL_RenderPresent" USING
                BY VALUE REND-POINTER
            END-CALL.
-       END PROGRAM COBOL-SDL2.
+       END PROGRAM SNAKE.
