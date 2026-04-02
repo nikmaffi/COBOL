@@ -1,5 +1,6 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. COBOL-COLOR-TEST.
+       PROGRAM-ID. COLOR-TEST.
+       AUTHOR.     Nicolo' Maffi.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
        77 FG-COLOR PIC 9 VALUE IS ZERO.
@@ -24,3 +25,4 @@
                END-IF
            END-PERFORM
            STOP RUN.
+       END PROGRAM COLOR-TEST.
