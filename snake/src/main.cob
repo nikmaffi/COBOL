@@ -9,6 +9,8 @@
        CONFIGURATION SECTION.
        SOURCE-COMPUTER.        NIK-WORKSTATION.
        OBJECT-COMPUTER.        UNKNOWN.
+       REPOSITORY.
+           FUNCTION ALL INTRINSIC.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
        77 SDL-INIT-VIDEO     PIC 99    USAGE IS COMP-5 VALUE IS 32.
@@ -57,6 +59,11 @@
                03 PL-RECT-Y  PIC S9(9) USAGE IS COMP-5.
                03 PL-RECT-W  PIC S9(9) USAGE IS COMP-5.
                03 PL-RECT-H  PIC S9(9) USAGE IS COMP-5.
+       01 TEMP-EDGES.
+           02 PL-EDG-RIGHT   PIC S9(9) USAGE IS COMP-5.
+           02 PL-EDG-BOTTOM  PIC S9(9) USAGE IS COMP-5.
+           02 FD-EDG-RIGHT   PIC S9(9) USAGE IS COMP-5.
+           02 FD-EDG-BOTTOM  PIC S9(9) USAGE IS COMP-5.
        01 FOOD.
            02 EATEN          PIC 9     USAGE IS BINARY.
            02 FD-COLOR.
@@ -111,8 +118,8 @@
            END-IF
 
       *    MAIN WINDOW INITIALIZATION
-           COMPUTE WIN-X = DESKTOP-W / 2 - WIN-W / 2
-           COMPUTE WIN-Y = DESKTOP-H / 2 - WIN-H / 2
+           COMPUTE WIN-X = (DESKTOP-W - WIN-W) / 2
+           COMPUTE WIN-Y = (DESKTOP-H - WIN-H) / 2
 
            CALL STATIC "SDL_CreateWindow" USING
                BY REFERENCE "CO.B.O.L. Snake"
@@ -162,7 +169,7 @@
                CALL STATIC "SDL_GetTicks" RETURNING TEND
                SUBTRACT TSTART FROM TEND GIVING DELTA
 
-               IF DELTA IS GREATER THAN 50 THEN
+               IF DELTA IS GREATER THAN 70 THEN
                    MOVE TEND TO TSTART
 
                    PERFORM EVENT-HANDLER
@@ -237,23 +244,26 @@
                GO TO KILL-RENDERER
            END-IF
 
+           COMPUTE PL-EDG-RIGHT = PL-RECT-X(1) + PL-RECT-W(1)
+           COMPUTE PL-EDG-BOTTOM = PL-RECT-Y(1) + PL-RECT-H(1)
+           COMPUTE FD-EDG-RIGHT = FD-RECT-X + FD-RECT-W
+           COMPUTE FD-EDG-BOTTOM = FD-RECT-Y + FD-RECT-H
+
            IF
-               FD-RECT-X < PL-RECT-X(1) + PL-RECT-W(1) AND
-               FD-RECT-X + FD-RECT-W > PL-RECT-X(1) AND
-               FD-RECT-Y < PL-RECT-Y(1) + PL-RECT-H(1) AND
-               FD-RECT-Y + FD-RECT-H > PL-RECT-Y(1)
+               FD-RECT-X < PL-EDG-RIGHT AND
+               FD-EDG-RIGHT > PL-RECT-X(1) AND
+               FD-RECT-Y < PL-EDG-BOTTOM AND
+               FD-EDG-BOTTOM > PL-RECT-Y(1)
            THEN
                SET EATEN TO 1
            END-IF
 
       *    FOOD
            IF EATEN IS EQUALS TO 1 THEN
-               COMPUTE FD-RECT-X =
-                   FUNCTION RANDOM * (WIN-W / UNIT-SIZE - 2) + 1
+               COMPUTE FD-RECT-X = RANDOM * (WIN-W / UNIT-SIZE - 2) + 1
                MULTIPLY UNIT-SIZE BY FD-RECT-X
 
-               COMPUTE FD-RECT-Y =
-                   FUNCTION RANDOM * (WIN-H / UNIT-SIZE - 2) + 1
+               COMPUTE FD-RECT-Y = RANDOM * (WIN-H / UNIT-SIZE - 2) + 1
                MULTIPLY UNIT-SIZE BY FD-RECT-Y
 
                SET EATEN TO ZERO
